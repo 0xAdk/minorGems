@@ -7,18 +7,31 @@ project(minorGems LANGUAGES CXX)
 
 set(ROOT_PATH "${CMAKE_CURRENT_LIST_DIR}/..")
 
-# Currently just uses linux settings
-set(PLATFORM "Linux")
-set(PLATFORM_PATH "linux")
+if(CMAKE_SYSTEM MATCHES Linux)
+	set(PLATFORM "Linux")
+	set(PLATFORM_PATH "linux")
 
-set(TIME_PLATFORM "Unix")
-set(TIME_PLATFORM_PATH "unix")
+	set(TIME_PLATFORM "Unix")
+	set(TIME_PLATFORM_PATH "unix")
 
-set(DIRECTORY_PLATFORM "Unix")
-set(DIRECTORY_PLATFORM_PATH "unix")
+	set(DIRECTORY_PLATFORM "Unix")
+	set(DIRECTORY_PLATFORM_PATH "unix")
 
-set(POLL_PLATFORM "Linux")
-set(POLL_PLATFORM_PATH "linux")
+	set(POLL_PLATFORM "Linux")
+	set(POLL_PLATFORM_PATH "linux")
+elseif(CMAKE_SYSTEM MATCHES Windows)
+	set(PLATFORM "Win32")
+	set(PLATFORM_PATH "win32")
+
+	set(TIME_PLATFORM "Win32")
+	set(TIME_PLATFORM_PATH "win32")
+
+	set(DIRECTORY_PLATFORM "Win32")
+	set(DIRECTORY_PLATFORM_PATH "win32")
+
+	set(POLL_PLATFORM "Unix")
+	set(POLL_PLATFORM_PATH "unix")
+endif()
 
 set(PLATFORM_DIRECTORY "${ROOT_PATH}/minorGems/io/file/${DIRECTORY_PLATFORM_PATH}/Directory${DIRECTORY_PLATFORM}")
 set(PLATFORM_TIME "${ROOT_PATH}/minorGems/system/${TIME_PLATFORM_PATH}/Time${TIME_PLATFORM}")
@@ -37,10 +50,8 @@ set(PLATFORM_BINARY_SEMAPHORE "${ROOT_PATH}/minorGems/system/${PLATFORM_PATH}/Bi
 # base headless
 add_library(MINOR_GEMS_BASE INTERFACE)
 target_include_directories(MINOR_GEMS_BASE INTERFACE "${ROOT_PATH}")
+find_package(Threads REQUIRED)
 target_link_libraries(MINOR_GEMS_BASE INTERFACE Threads::Threads)
-
-# Linux specific
-target_compile_definitions(MINOR_GEMS_BASE INTERFACE LINUX)
 
 # graphics libs
 # linking with this is equivalent to `LINK_HEADLESS = no` int the makeFileList
@@ -48,15 +59,11 @@ add_library(MINOR_GEMS_GRAPHICS_LIBS INTERFACE)
 
 find_package(OpenGL REQUIRED)
 find_package(SDL REQUIRED)
-find_package(Threads REQUIRED)
-find_package(X11 REQUIRED) # Linux specific
-
 target_link_libraries(MINOR_GEMS_GRAPHICS_LIBS INTERFACE
 	OpenGL::GL
 	OpenGL::GLU
 	# don't use SDL::SDL since cmake 1.16 doesn't support it
 	${SDL_LIBRARY}
-	X11::X11 # Linux specific
 )
 
 # libjpeg
@@ -86,7 +93,7 @@ target_link_libraries(MINOR_GEMS_SCREEN_GL_SDL PRIVATE
 
 # single texture gl
 add_library(MINOR_GEMS_SINGLE_TEXTURE_GL STATIC "${ROOT_PATH}/minorGems/graphics/openGL/SingleTextureGL.cpp")
-target_link_libraries(MINOR_GEMS_SINGLE_TEXTURE_GL PRIVATE MINOR_GEMS_BASE)
+target_link_libraries(MINOR_GEMS_SINGLE_TEXTURE_GL PRIVATE MINOR_GEMS_BASE MINOR_GEMS_GRAPHICS_LIBS)
 
 # type io
 add_library(MINOR_GEMS_TYPE_IO STATIC "${PLATFORM_TYPE_IO}.cpp")
@@ -303,3 +310,15 @@ target_link_libraries(MINOR_GEMS_STRING_TREE PRIVATE MINOR_GEMS_BASE)
 # crc32
 add_library(MINOR_GEMS_CRC32 STATIC "${ROOT_PATH}/minorGems/util/crc32.cpp")
 target_link_libraries(MINOR_GEMS_CRC32 PRIVATE MINOR_GEMS_BASE)
+
+if(CMAKE_SYSTEM MATCHES Linux)
+	target_compile_definitions(MINOR_GEMS_BASE INTERFACE LINUX)
+
+	find_package(X11 REQUIRED)
+	target_link_libraries(MINOR_GEMS_GRAPHICS_LIBS INTERFACE X11::X11)
+elseif(CMAKE_SYSTEM MATCHES Windows)
+	target_compile_definitions(MINOR_GEMS_BASE INTERFACE WIN_32 STATICLIB)
+
+	target_link_libraries(MINOR_GEMS_BASE INTERFACE wsock32 winmm -static)
+endif()
+
