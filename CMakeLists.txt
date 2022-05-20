@@ -75,6 +75,8 @@ if (${PNG_FOUND})
 
 	target_link_libraries(MINOR_GEMS_LIBPNG PUBLIC PNG::PNG)
 	target_compile_definitions(MINOR_GEMS_LIBPNG PUBLIC USE_PNG)
+else()
+	message(WARNING "target MINOR_GEMS_LIBPNG wont be created")
 endif()
 
 # screen gl sdl
