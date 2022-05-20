@@ -66,23 +66,16 @@ target_link_libraries(MINOR_GEMS_GRAPHICS_LIBS INTERFACE
 	${SDL_LIBRARY}
 )
 
-# libjpeg
-# linking with this is equivalent to `LINK_AGAINST_LIBPNG = yes` in the makeFileList
-add_library(MINOR_GEMS_LIBJPEG STATIC "${ROOT_PATH}/minorGems/graphics/converters/JPEGImageConverter.cpp")
-target_link_libraries(MINOR_GEMS_LIBJPEG PRIVATE MINOR_GEMS_BASE)
-
-find_package(JPEG) # FIXME? what happens if libjpeg isn't found on the system?
-target_link_libraries(MINOR_GEMS_LIBJPEG PUBLIC JPEG::JPEG)
-target_compile_definitions(MINOR_GEMS_LIBJPEG PUBLIC USE_JPEG)
-
 # libpng
 # linking with this is equivalent to `LINK_AGAINST_LIBPNG = yes` in the makeFileList
-add_library(MINOR_GEMS_LIBPNG STATIC "${ROOT_PATH}/minorGems/graphics/converters/PNGImageConverter.cpp")
-target_link_libraries(MINOR_GEMS_LIBPNG PRIVATE MINOR_GEMS_BASE)
+find_package(PNG)
+if (${PNG_FOUND})
+	add_library(MINOR_GEMS_LIBPNG STATIC "${ROOT_PATH}/minorGems/graphics/converters/PNGImageConverter.cpp")
+	target_link_libraries(MINOR_GEMS_LIBPNG PRIVATE MINOR_GEMS_BASE)
 
-find_package(PNG) # FIXME? what happens if libpng isn't found on the system?
-target_link_libraries(MINOR_GEMS_LIBPNG PUBLIC PNG::PNG)
-target_compile_definitions(MINOR_GEMS_LIBPNG PUBLIC USE_PNG)
+	target_link_libraries(MINOR_GEMS_LIBPNG PUBLIC PNG::PNG)
+	target_compile_definitions(MINOR_GEMS_LIBPNG PUBLIC USE_PNG)
+endif()
 
 # screen gl sdl
 add_library(MINOR_GEMS_SCREEN_GL_SDL STATIC "${ROOT_PATH}/minorGems/graphics/openGL/ScreenGL_SDL.cpp")
